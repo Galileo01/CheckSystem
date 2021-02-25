@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本查重系统</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./lib/css/element-ui.css">
+    <script src="./lib/js/echarts.min.js"></script>
+    <script src="./lib/js/vue.js"></script>
+    <script src="./lib/js/element.js"></script>
+    <script src="./lib/js/axios.min.js"></script>
+
+</head>
+
+<body>
+    <main id="main">
+        <Result_410 v-if="isGetResult" @re-choose="reChoose" :user-doc-info="userDocInfo" :check-result="checkResult">
+        </Result_410>
+        <Entrance_410 v-show="!isGetResult" @submit="submit" v-loading="loading" :checkResult="checkResult" ref="entrance">
+        </Entrance_410>
+    </main>
+
+    <!---入口组件--->
+    <template id="entrance_tem">
+        <div class="entrance">
+            <section class="file_preview" v-if="isFileChoosed">
+                <el-row class="alic">
+                    <el-col :span="4">相似度阈值 :</el-col>
+                    <el-col :span="6">
+                        <el-input type="text" size="mini" v-model="params.minSimilarity" clearable
+                            placeholder="请输入最小阈值"></el-input>
+                    </el-col>
+                    <el-col :span="10" :offset="1">
+                        <div class="info">
+                            <i class="el-icon-info"></i>
+                            <span>小于这个阈值的文档将不会显示</span>
+                        </div>
+
+                    </el-col>
+                </el-row>
+                <el-row class="alic">
+                    <el-col :span="4">查重算法 :</el-col>
+                    <el-col :span="7">
+                        <el-select type="text" size="mini" v-model="params.checkAlgorithm" clearable>
+                            <el-option v-for="(item,index) in Algorithms" :key="item.value+'sss'" :value="item.value"
+                                :label="item.label"></el-option>
+                        </el-select>
+                    </el-col>
+                </el-row>
+                <el-divider></el-divider>
+                <el-row class="alic">
+                    <el-col :span="4">文档名称 :</el-col>
+                    <el-col :span="11">
+                        <el-input size="mini" type="text" v-model="params.file.name" clearable></el-input>
+                    </el-col>
+                </el-row>
+                <el-row class="alic">
+                    <el-col :span="4">文档类型 :</el-col>
+                    <el-col :span="3"><span>{{params.file.type}}</span></el-col>
+                </el-row>
+                <el-row class="alic">
+                    <el-col :span="4">文档大小 :</el-col>
+                    <el-col :span="3"><span>{{params.file.size}}</span></el-col>
+                </el-row>
+                <el-row class="alic">
+                    <el-col :span="4">文档路径 :</el-col>
+                    <el-col :span="20"><span>{{params.file.path}}</span></el-col>
+                </el-row>
+                <el-row class="alic">
+                    <el-col :span="4">文档预览 :</el-col>
+                    <el-col :span="3">
+                        <el-tooltip :content="tooltip" effect="light" placement="right">
+                            <i class="el-icon-view" @click="previewClick">
+                                预览
+                            </i>
+                        </el-tooltip>
+                        <!-- <el-button size="mini" icon="el-icon-view" type="">预览</el-button></el-col> -->
+                </el-row>
+                <div class="bootom_btn">
+                    <el-button size="small" type="info" icon="el-icon-refresh-left" @click="reChoose">重新选择</el-button>
+                    <el-button size="small" type="primary" icon="el-icon-upload" @click="submit">上传文档</el-button>
+                </div>
+            </section>
+            <section v-else class="uploader">
+                <p>选择或拖拽文件</p>
+                <el-upload class="uploader" action="http://127.0.0.1:5000/post" name="pic" :auto-upload="false"
+                    ref="uploader" :show-file-list="false" :on-change="fileChange" :drag="true" @change="fileChange">
+                    <i class="el-icon-plus"></i>
+                </el-upload>
+            </section>
+        </div>
+    </template>
+    <!---结果展示--->
+    <template id="result_tem">
+        <div class="result">
+            <!---比例饼图-->
+            <section class="header" v-show="currentMode==='show'">
+                <div class="pie_container"></div>
+                <div class="btns">
+                    <el-button size="small" type="info" icon="el-icon-refresh-left" @click="reChooseClick">重新选择
+                    </el-button>
+                    <el-select v-model="currentBetween" size="small" @change="betweenChange">
+                        <el-option label="所有" value="-1"></el-option>
+                        <el-option v-for="(item,index) in stepsObject" :label="item.name" :value="index" :key="index">
+                        </el-option>
+                    </el-select>
+                </div>
+            </section>
+            <el-divider v-if="currentMode==='show'"></el-divider>
+            <!--文档列表-->
+            <section class="doc_list" v-show="currentMode==='show'">
+
+                <div class="list">
+                    <el-table :data="showList" style="width: 98%;margin:0 auto;" stripe height="500" size="small"
+                        :default-sort="{prop: 'similarity', order: 'descending'}"
+                        :header-cell-class-style="{textAlign:'center'}">
+                        <el-table-column prop="docname" label="文档名称" :width="tableColumnWidth" sortable align="center">
+                        </el-table-column>
+                        <el-table-column prop="doc_format" label="文档类型" :width="tableColumnWidth" align="center">
+                        </el-table-column>
+                        <el-table-column prop="similarity" label="相似度" :width="tableColumnWidth" sortable
+                            align="center">
+                        </el-table-column>
+                        <el-table-column prop="num_of_self" label="重复段数" :width="tableColumnWidth" sortable
+                            align="center">
+                        </el-table-column>
+                        <el-table-column label="操作" align="center">
+                            <template v-slot="{ row }">
+                                <div class="btns">
+                                    <el-tooltip effect="light" placement="left" content="比较文档" placement="top-start">
+                                        <svg @click="compareClick(row)" t="1609222599064" class="vs_icon icon"
+                                            viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg"
+                                            p-id="8104" width="24" height="20">
+                                            <path
+                                                d="M247.142 794.982a23.78 23.78 0 0 1-3.276-0.23c-10.804-1.357-19.61-9.395-21.965-20.045L112.64 282.112c-3.098-13.952 5.709-27.75 19.66-30.848 13.876-3.123 27.751 5.709 30.849 19.66l93.67 422.324 218.547-428.493c6.503-12.723 22.016-17.792 34.79-11.29 12.724 6.503 17.767 22.068 11.29 34.791l-251.238 492.62c-4.506 8.73-13.44 14.106-23.066 14.106zM669.184 793.78c-4.813 0-9.702-0.129-14.618-0.36-58.444-3.097-104.934-22.911-134.4-57.369-24.166-28.211-34.841-63.77-30.848-102.784l0.59-5.017c1.97-14.157 14.924-24.013 29.209-22.068 14.157 1.972 24.013 15.028 22.067 29.21l-0.358 3.149c-2.51 24.576 3.942 46.643 18.662 63.82 20.07 23.425 53.888 37.044 97.843 39.373 85.965 4.48 151.885-41.958 169.959-87.961 18.073-45.978-27.7-74.778-48.18-85.018-10.342-5.171-31.462-10.905-53.785-16.998-65.331-17.767-146.637-39.885-174.874-95.079-12.109-23.628-12.825-49.996-2.176-78.336 19.021-50.56 51.149-86.246 95.488-106.01 51.507-22.962 119.885-22.04 182.861 2.535 75.802 29.568 89.78 108.314 86.58 145.818-1.204 14.233-13.569 24.806-27.982 23.603-14.208-1.203-24.73-13.645-23.603-27.853 0.23-2.867 4.557-70.579-53.785-93.337-50.356-19.636-103.783-20.967-142.976-3.482-31.258 13.926-54.17 39.86-68.148 76.98-7.193 19.071-3.558 30.002-0.204 36.556 17.792 34.816 92.748 55.194 142.387 68.71 26.01 7.066 48.435 13.159 63.36 20.634 68.173 34.1 96.23 91.648 73.19 150.22-24.217 61.569-102.016 121.063-206.259 121.063z"
+                                                p-id="8105"></path>
+                                            <path
+                                                d="M1024 214.605v518.323c0 14.08-11.52 25.6-25.6 25.6s-25.6-11.52-25.6-25.6V214.605c0-33.536-28.416-60.928-61.952-60.928h-798.72c-33.536 0-60.928 24.576-60.928 58.112V809.65c0 33.536 27.392 60.928 60.928 60.928h742.758c14.08 0 25.6 11.52 25.6 25.6s-11.52 25.6-25.6 25.6H112.128C50.176 921.78 0 871.603 0 809.651V211.79c0-61.952 50.176-109.312 112.128-109.312h798.72c61.696 0 113.152 50.176 113.152 112.128z"
+                                                p-id="8106"></path>
+                                        </svg>
+                                    </el-tooltip>
+                                </div>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </section>
+            <!--文档对比页面-->
+            <section class="doc_compare" v-if="currentMode==='compare'">
+                <div class="header">
+                    <div class="similarity"><span>相似度 : </span><span
+                            class="value">{{currentCompareData.similarity}}</span>
+                    </div>
+                    <el-button size="mini" type="danger" @click="exitCompare" class="exit_btn">退出比较</el-button>
+                </div>
+                <div class="docs_wapper">
+                    <section class="doc_wapper">
+                        <h3>{{userDocInfo.docName}}</h3>
+                        <div class="content" v-html="userDocHtmlStr"></div>
+                    </section>
+                    <el-divider direction="vertical"></el-divider>
+                    <section class="doc_wapper">
+                        <h3>{{currentCompareData.docname}}</h3>
+                        <div class="content" v-html="currentCompareData.htmlStr">
+                        </div>
+                    </section>
+                </div>
+            </section>
+        </div>
+    </template>
+
+</body>
+
+</html>
+<script src="./js/index_410.js" type="module"></script>

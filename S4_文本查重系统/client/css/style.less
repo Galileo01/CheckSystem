@@ -1,0 +1,139 @@
+html {
+    height: 100%;
+}
+
+#main {
+    .el-divider--horizontal {
+        margin: 5px 0;
+    }
+}
+//el-row 水平居中
+.alic {
+    display: flex;
+    align-items: center;
+}
+.el-row {
+    margin-bottom: 10px;
+}
+
+.el-select-dropdown__wrap .el-select-dropdown__item {
+    font-size: 13px;
+}
+.entrance {
+    font-size: 13px;
+    // text-align: center;
+    .file_preview {
+        .info {
+            font-size: 13px;
+            color: #909399;
+        }
+
+        .el-icon-view {
+            cursor: pointer;
+            color: #1989fa;
+        }
+        .bootom_btn {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    }
+    .uploader {
+        text-align: center;
+        .el-upload {
+            .el-upload-dragger {
+                display: grid;
+                place-content: center;
+                .el-icon-plus {
+                    font-size: 28px;
+                }
+            }
+        }
+    }
+}
+
+.result {
+    .header {
+        position: relative;
+        width: 100%;
+        height: 200px;
+
+        .pie_container {
+            width: 70%;
+            height: 100%;
+            margin: 0 auto;
+        }
+        .btns {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            .el-select {
+                margin-top: 20px;
+                width: 100px;
+            }
+        }
+    }
+    .doc_list {
+        padding: 0 20px;
+        .btns {
+            display: flex;
+            align-items: center;
+            justify-content: space-evenly;
+            //vs 图标
+            .vs_icon:hover {
+                fill: #409eff;
+            }
+            .el-icon-view:hover {
+                color: #409eff;
+            }
+            .icon {
+                cursor: pointer;
+            }
+        }
+        .el-table td,
+        .el-table th.is-leaf {
+            // text-align: center;
+        }
+    }
+    .doc_compare {
+        .header {
+            // justify-content: space-between;
+            position: relative;
+            font-size: 14px;
+            height: 30px;
+            margin-bottom: 10px;
+            line-height: 30px;
+            .similarity {
+                text-align: center;
+                .value {
+                    color: #f56c6c;
+                    font-size: 24px;
+                }
+            }
+            .exit_btn {
+                position: absolute;
+                right: 10px;
+                bottom: 0;
+            }
+        }
+        .docs_wapper {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-evenly;
+            .doc_wapper {
+                width: 48%;
+                .content {
+                    //中英文都换行
+                    word-break: break-all;
+                    white-space: pre-wrap;
+                }
+            }
+            .el-divider {
+                height: auto;
+            }
+        }
+    }
+}

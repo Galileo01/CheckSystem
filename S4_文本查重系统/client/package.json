@@ -1,0 +1,38 @@
+{
+  "name": "class_design",
+  "version": "1.0.0",
+  "description": "asdasd",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "electron .",
+    "packager": "electron-packager . CheckSystem --out=dist --arch=x64 --electron-version=11.0.3 --overwrite  --ignore=ts --ignore=todo --icon=./icon.png",
+    "build": "electron-builder --win --x64"
+  },
+  "build": {
+    "appId": "com.ltt.app",
+    "electronVersion": "11.0.3",
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    }
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron-packager": "^15.2.0",
+    "electron-reloader": "^1.1.0"
+  },
+  "dependencies": {
+    "iconv-lite": "^0.6.2"
+  }
+}
